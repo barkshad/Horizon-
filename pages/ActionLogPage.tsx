@@ -2,8 +2,7 @@
 import React, { useState } from 'react';
 import { ActionLog } from '../types';
 import { storageService } from '../services/storageService';
-// Added Clock to the imports from lucide-react
-import { PencilLine, Send, History as HistoryIcon, Rocket, Clock } from 'lucide-react';
+import { Send, Clock, Sparkles } from 'lucide-react';
 
 interface ActionLogPageProps {
   logs: ActionLog[];
@@ -34,84 +33,61 @@ const ActionLogPage: React.FC<ActionLogPageProps> = ({ logs, setLogs, userId }) 
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <header className="text-center space-y-2">
-        <h2 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter">Momentum Log</h2>
-        <p className="text-slate-500 dark:text-slate-400 font-medium text-lg">Consistent small actions are the fuel for giant dreams.</p>
+    <div className="max-w-3xl mx-auto flex flex-col h-full space-y-8 animate-in fade-in slide-in-from-bottom-4">
+      <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-6">
+        <div>
+          <h2 className="text-2xl font-black dark:text-white">Momentum Feed</h2>
+          <p className="text-sm text-slate-500 font-medium">A conversation with your progress.</p>
+        </div>
+        <div className="w-10 h-10 rounded-full bg-teal-500/10 flex items-center justify-center text-teal-600">
+          <Sparkles size={20} />
+        </div>
       </header>
 
-      <section className="glass-card p-10 rounded-[3rem] shadow-2xl relative overflow-hidden focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all">
-        <div className="absolute top-0 left-0 w-2 h-full bg-indigo-600" />
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex items-center gap-3">
-             <PencilLine size={24} className="text-indigo-500" />
-             <label className="text-xl font-black dark:text-white tracking-tight">What did you build today?</label>
+      <div className="flex-1 space-y-6">
+        {logs.map((log, idx) => (
+          <div key={log.id} className={`flex ${idx % 2 === 0 ? 'justify-start' : 'justify-end'} animate-in fade-in duration-300`}>
+            <div className={`max-w-[85%] p-4 rounded-2xl shadow-sm ${
+              idx % 2 === 0 
+                ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 bubble-left border border-slate-100 dark:border-slate-700' 
+                : 'bg-teal-600 text-white bubble-right'
+            }`}>
+              <p className="text-sm font-medium leading-relaxed">{log.content}</p>
+              <div className={`mt-2 flex items-center gap-1 text-[10px] font-black uppercase tracking-tighter ${
+                idx % 2 === 0 ? 'text-slate-400' : 'text-teal-100'
+              }`}>
+                <Clock size={10} />
+                {new Date(log.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                <span className="mx-1">•</span>
+                {new Date(log.date).toLocaleDateString()}
+              </div>
+            </div>
           </div>
-          <textarea 
-            className="w-full bg-slate-50 dark:bg-slate-800 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-700 focus:ring-0 focus:border-indigo-500 outline-none min-h-[160px] transition-all dark:text-white font-bold text-lg placeholder:text-slate-300 dark:placeholder:text-slate-600 resize-none shadow-inner"
-            placeholder="I took a step toward..."
+        ))}
+        {logs.length === 0 && (
+          <div className="py-20 text-center text-slate-400">
+            <p className="font-bold">No logs yet. Take the first step today.</p>
+          </div>
+        )}
+      </div>
+
+      <div className="sticky bottom-0 lg:bottom-6 pt-4 pb-2 bg-slate-50 dark:bg-slate-950">
+        <form onSubmit={handleSubmit} className="flex gap-2">
+          <input 
+            className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-sm font-medium focus:ring-2 focus:ring-teal-500/20 outline-none dark:text-white placeholder:text-slate-400"
+            placeholder="What did you achieve today?"
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />
-          <div className="flex justify-end">
-            <button 
-              type="submit" 
-              disabled={!content.trim() || loading}
-              className="px-10 py-5 bg-indigo-600 text-white rounded-[1.5rem] font-black hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 shadow-xl shadow-indigo-100 dark:shadow-none"
-            >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Send size={20} />
-              )}
-              Log Momentum
-            </button>
-          </div>
+          <button 
+            type="submit"
+            disabled={!content.trim() || loading}
+            className="w-14 h-14 bg-teal-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-teal-900/10 hover:bg-teal-700 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send size={22} />}
+          </button>
         </form>
-      </section>
-
-      <section className="space-y-10">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-indigo-100 dark:bg-indigo-900/40 rounded-2xl text-indigo-600 dark:text-indigo-400">
-            <HistoryIcon size={24} />
-          </div>
-          <h3 className="text-2xl font-black dark:text-white tracking-tight">Your Action History</h3>
-        </div>
-        
-        <div className="relative space-y-6">
-          <div className="absolute left-10 top-0 bottom-0 w-px bg-slate-200 dark:bg-slate-800 -z-10" />
-          
-          {logs.map((log, idx) => (
-            <div key={log.id} className="group flex gap-8 items-start animate-in fade-in slide-in-from-left-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
-              <div className="flex-shrink-0 w-20 h-20 bg-white dark:bg-slate-900 rounded-[1.8rem] flex flex-col items-center justify-center border border-slate-200 dark:border-slate-800 shadow-sm group-hover:border-indigo-500/50 transition-all group-hover:scale-110">
-                <span className="text-2xl font-black text-slate-800 dark:text-white leading-none">
-                  {new Date(log.date).getDate()}
-                </span>
-                <span className="text-[10px] font-black uppercase text-indigo-500 tracking-widest mt-1">
-                  {new Date(log.date).toLocaleDateString(undefined, { month: 'short' })}
-                </span>
-              </div>
-              <div className="flex-1 glass-card p-8 rounded-[2rem] group-hover:bg-white dark:group-hover:bg-slate-800/80 transition-all">
-                <p className="text-lg text-slate-700 dark:text-slate-300 font-bold leading-relaxed">{log.content}</p>
-                <div className="mt-4 flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  <Clock size={12} className="text-indigo-400" />
-                  <span>Logged at {new Date(log.date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {logs.length === 0 && (
-            <div className="text-center py-32 glass-card rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-800">
-              <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800/50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Rocket size={32} className="text-slate-300" />
-              </div>
-              <h4 className="text-2xl font-black dark:text-white mb-2">History starts with action.</h4>
-              <p className="text-slate-500 font-bold italic">Write your first entry above to begin the legacy.</p>
-            </div>
-          )}
-        </div>
-      </section>
+      </div>
     </div>
   );
 };

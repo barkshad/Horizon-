@@ -7,7 +7,12 @@ import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
 import DreamsPage from './pages/DreamsPage';
 import ActionLogPage from './pages/ActionLogPage';
+import DiscoveryPage from './pages/DiscoveryPage';
+import ProfilePage from './pages/ProfilePage';
 import Sidebar from './components/Sidebar';
+import BottomNav from './components/BottomNav';
+
+export type AppTab = 'dashboard' | 'dreams' | 'logs' | 'discovery' | 'profile';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -15,11 +20,10 @@ const App: React.FC = () => {
   const [dreams, setDreams] = useState<Dream[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [logs, setLogs] = useState<ActionLog[]>([]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'dreams' | 'logs'>('dashboard');
+  const [activeTab, setActiveTab] = useState<AppTab>('dashboard');
   const [installPrompt, setInstallPrompt] = useState<any>(null);
 
   useEffect(() => {
-    // 1. Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         const u: User = {
@@ -35,7 +39,6 @@ const App: React.FC = () => {
       setLoading(false);
     });
 
-    // 2. Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         const u: User = {
@@ -55,7 +58,6 @@ const App: React.FC = () => {
       }
     });
 
-    // 3. PWA Install prompt
     const handleBeforeInstall = (e: any) => {
       e.preventDefault();
       setInstallPrompt(e);
@@ -91,33 +93,24 @@ const App: React.FC = () => {
     if (installPrompt) {
       installPrompt.prompt();
       const { outcome } = await installPrompt.userChoice;
-      if (outcome === 'accepted') {
-        setInstallPrompt(null);
-      }
+      if (outcome === 'accepted') setInstallPrompt(null);
     } else {
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-      if (isIOS) {
-        alert("To install on iOS: Tap the 'Share' icon in your browser and select 'Add to Home Screen'.");
-      } else {
-        alert("App installation is not available at this moment.");
-      }
+      alert("Installation ready: Add this page to your home screen via browser settings.");
     }
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
-  if (!user) {
-    return <AuthPage />;
-  }
+  if (!user) return <AuthPage />;
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <Sidebar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
@@ -127,11 +120,9 @@ const App: React.FC = () => {
         isInstallable={!!installPrompt}
       />
       
-      <main className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 transition-all">
-        <div className="max-w-6xl mx-auto">
-          {activeTab === 'dashboard' && (
-            <Dashboard dreams={dreams} goals={goals} logs={logs} />
-          )}
+      <main className="flex-1 overflow-y-auto custom-scrollbar safe-pt lg:pb-0 pb-20">
+        <div className="max-w-5xl mx-auto px-4 py-6 md:px-8 lg:py-12">
+          {activeTab === 'dashboard' && <Dashboard dreams={dreams} goals={goals} logs={logs} />}
           {activeTab === 'dreams' && (
             <DreamsPage 
               dreams={dreams} 
@@ -148,8 +139,12 @@ const App: React.FC = () => {
               userId={user.uid}
             />
           )}
+          {activeTab === 'discovery' && <DiscoveryPage />}
+          {activeTab === 'profile' && <ProfilePage user={user} onLogout={handleLogout} />}
         </div>
       </main>
+
+      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
   );
 };
