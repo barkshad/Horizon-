@@ -25,6 +25,7 @@ const App: React.FC = () => {
           uid: firebaseUser.uid,
           email: firebaseUser.email,
           displayName: firebaseUser.displayName || (firebaseUser.isAnonymous ? "Guest" : "User"),
+          photoURL: firebaseUser.photoURL || undefined,
           accountType: firebaseUser.isAnonymous ? 'guest' : 'registered',
           createdAt: Date.now(),
         };

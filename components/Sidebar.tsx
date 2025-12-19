@@ -55,8 +55,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user, onLogo
 
       <div className="mt-auto pt-6 border-t border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-500 font-bold">
-            {user.displayName.charAt(0).toUpperCase()}
+          <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-500 font-bold overflow-hidden">
+            {user.photoURL ? (
+              <img src={user.photoURL} alt={user.displayName} className="w-full h-full object-cover" />
+            ) : (
+              user.displayName.charAt(0).toUpperCase()
+            )}
           </div>
           <div className="flex-1 overflow-hidden">
             <p className="text-sm font-semibold truncate dark:text-white">{user.displayName}</p>
