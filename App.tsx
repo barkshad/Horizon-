@@ -11,12 +11,14 @@ import DiscoveryPage from './pages/DiscoveryPage';
 import ProfilePage from './pages/ProfilePage';
 import Sidebar from './components/Sidebar';
 import BottomNav from './components/BottomNav';
+import LoadingScreen from './components/LoadingScreen';
 
 export type AppTab = 'dashboard' | 'dreams' | 'logs' | 'discovery' | 'profile';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authReady, setAuthReady] = useState(false);
+  const [dataReady, setDataReady] = useState(false);
   const [dreams, setDreams] = useState<Dream[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [logs, setLogs] = useState<ActionLog[]>([]);
@@ -35,8 +37,10 @@ const App: React.FC = () => {
         };
         setUser(u);
         fetchData(u.uid);
+      } else {
+        setDataReady(true);
       }
-      setLoading(false);
+      setAuthReady(true);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -55,6 +59,7 @@ const App: React.FC = () => {
         setDreams([]);
         setGoals([]);
         setLogs([]);
+        setDataReady(true);
       }
     });
 
@@ -71,6 +76,7 @@ const App: React.FC = () => {
   }, []);
 
   const fetchData = async (uid: string) => {
+    setDataReady(false);
     try {
       const [fetchedDreams, fetchedGoals, fetchedLogs] = await Promise.all([
         storageService.getDreams(uid),
@@ -82,6 +88,8 @@ const App: React.FC = () => {
       setLogs(fetchedLogs);
     } catch (error) {
       console.error("Error fetching data:", error);
+    } finally {
+      setDataReady(true);
     }
   };
 
@@ -99,53 +107,66 @@ const App: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  // The loading screen stays until auth is checked
+  // If user is auth'd, it stays until first data fetch is done
+  const isStartupComplete = authReady && (user ? dataReady : true);
 
-  if (!user) return <AuthPage />;
+  if (!authReady) return <LoadingScreen isReady={false} />;
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      <Sidebar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        user={user} 
-        onLogout={handleLogout} 
-        onInstall={handleInstallApp}
-        isInstallable={!!installPrompt}
-      />
+    <>
+      <LoadingScreen isReady={isStartupComplete} />
       
-      <main className="flex-1 overflow-y-auto custom-scrollbar safe-pt lg:pb-0 pb-20">
-        <div className="max-w-5xl mx-auto px-4 py-6 md:px-8 lg:py-12">
-          {activeTab === 'dashboard' && <Dashboard dreams={dreams} goals={goals} logs={logs} />}
-          {activeTab === 'dreams' && (
-            <DreamsPage 
-              dreams={dreams} 
-              setDreams={setDreams} 
-              goals={goals} 
-              setGoals={setGoals} 
-              userId={user.uid}
-            />
-          )}
-          {activeTab === 'logs' && (
-            <ActionLogPage 
-              logs={logs} 
-              setLogs={setLogs} 
-              userId={user.uid}
-            />
-          )}
-          {activeTab === 'discovery' && <DiscoveryPage />}
-          {activeTab === 'profile' && <ProfilePage user={user} onLogout={handleLogout} />}
-        </div>
-      </main>
+      {!user ? (
+        <AuthPage />
+      ) : (
+        <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-opacity duration-500 overflow-hidden">
+          <Sidebar 
+            activeTab={activeTab === 'dashboard' || activeTab === 'dreams' || activeTab === 'logs' ? activeTab as any : 'dashboard'} 
+            setActiveTab={setActiveTab as any} 
+            user={user} 
+            onLogout={handleLogout} 
+            onInstall={handleInstallApp}
+            isInstallable={!!installPrompt}
+          />
+          
+          <main className="flex-1 overflow-y-auto custom-scrollbar safe-pt lg:pb-0 pb-20">
+            <div className="max-w-5xl mx-auto px-4 py-6 md:px-8 lg:py-12">
+              {!dataReady ? (
+                <div className="animate-in fade-in duration-500">
+                  {/* Global loader used during navigation-based data refreshes if needed */}
+                  <div className="h-1 w-full bg-slate-200 dark:bg-slate-800 overflow-hidden fixed top-0 left-0 z-[100]">
+                    <div className="h-full bg-teal-500 w-1/3 animate-[shimmer_2s_infinite_linear]" />
+                  </div>
+                </div>
+              ) : null}
 
-      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
-    </div>
+              {activeTab === 'dashboard' && <Dashboard dreams={dreams} goals={goals} logs={logs} isLoading={!dataReady} />}
+              {activeTab === 'dreams' && (
+                <DreamsPage 
+                  dreams={dreams} 
+                  setDreams={setDreams} 
+                  goals={goals} 
+                  setGoals={setGoals} 
+                  userId={user.uid}
+                />
+              )}
+              {activeTab === 'logs' && (
+                <ActionLogPage 
+                  logs={logs} 
+                  setLogs={setLogs} 
+                  userId={user.uid}
+                />
+              )}
+              {activeTab === 'discovery' && <DiscoveryPage />}
+              {activeTab === 'profile' && <ProfilePage user={user} onLogout={handleLogout} />}
+            </div>
+          </main>
+
+          <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+        </div>
+      )}
+    </>
   );
 };
 
