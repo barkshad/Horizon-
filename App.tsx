@@ -12,6 +12,7 @@ import ProfilePage from './pages/ProfilePage';
 import Sidebar from './components/Sidebar';
 import BottomNav from './components/BottomNav';
 import LoadingScreen from './components/LoadingScreen';
+import WelcomeScreen from './components/WelcomeScreen';
 
 export type AppTab = 'dashboard' | 'dreams' | 'logs' | 'discovery' | 'profile';
 
@@ -24,6 +25,8 @@ const App: React.FC = () => {
   const [logs, setLogs] = useState<ActionLog[]>([]);
   const [activeTab, setActiveTab] = useState<AppTab>('dashboard');
   const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [hasProceeded, setHasProceeded] = useState(false);
+  
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('horizon-theme');
     return saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -50,6 +53,7 @@ const App: React.FC = () => {
         };
         setUser(u);
         fetchData(u.uid);
+        setHasProceeded(true); // Skip welcome if logged in
       } else {
         setDataReady(true);
       }
@@ -108,6 +112,7 @@ const App: React.FC = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    setHasProceeded(false);
   };
 
   const handleInstallApp = async () => {
@@ -116,7 +121,7 @@ const App: React.FC = () => {
       const { outcome } = await installPrompt.userChoice;
       if (outcome === 'accepted') setInstallPrompt(null);
     } else {
-      alert("Installation ready: Add this page to your home screen via browser settings.");
+      alert("Horizon App is ready! Select 'Add to Home Screen' from your browser's share/menu options for a native experience.");
     }
   };
 
@@ -129,7 +134,15 @@ const App: React.FC = () => {
       <LoadingScreen isReady={isStartupComplete} />
       
       {!user ? (
-        <AuthPage />
+        !hasProceeded ? (
+          <WelcomeScreen 
+            onProceed={() => setHasProceeded(true)} 
+            onInstall={handleInstallApp}
+            isInstallable={!!installPrompt}
+          />
+        ) : (
+          <AuthPage />
+        )
       ) : (
         <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-opacity duration-500 overflow-hidden">
           <Sidebar 
