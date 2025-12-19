@@ -1,7 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from "./services/firebase";
 import { User, Dream, Goal, ActionLog } from './types';
 import { storageService } from './services/storageService';
 import AuthPage from './pages/AuthPage';
@@ -19,27 +17,12 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'dreams' | 'logs'>('dashboard');
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const u: User = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName || (firebaseUser.isAnonymous ? "Guest" : "User"),
-          photoURL: firebaseUser.photoURL || undefined,
-          accountType: firebaseUser.isAnonymous ? 'guest' : 'registered',
-          createdAt: Date.now(),
-        };
-        setUser(u);
-        await fetchData(firebaseUser.uid);
-      } else {
-        setUser(null);
-        setDreams([]);
-        setGoals([]);
-        setLogs([]);
-      }
-      setLoading(false);
-    });
-    return () => unsubscribe();
+    const localUser = storageService.getLocalUser();
+    if (localUser) {
+      setUser(localUser);
+      fetchData(localUser.uid);
+    }
+    setLoading(false);
   }, []);
 
   const fetchData = async (uid: string) => {
@@ -57,8 +40,18 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await signOut(auth);
+  const handleLogin = (u: User) => {
+    setUser(u);
+    storageService.setLocalUser(u);
+    fetchData(u.uid);
+  };
+
+  const handleLogout = () => {
+    storageService.clearSession();
+    setUser(null);
+    setDreams([]);
+    setGoals([]);
+    setLogs([]);
   };
 
   if (loading) {
@@ -70,7 +63,7 @@ const App: React.FC = () => {
   }
 
   if (!user) {
-    return <AuthPage onLogin={() => {}} />; // onLogin handled by Firebase listener
+    return <AuthPage onLogin={handleLogin} />;
   }
 
   return (
