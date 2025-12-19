@@ -24,6 +24,19 @@ const App: React.FC = () => {
   const [logs, setLogs] = useState<ActionLog[]>([]);
   const [activeTab, setActiveTab] = useState<AppTab>('dashboard');
   const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('horizon-theme');
+    return saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('horizon-theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -107,8 +120,6 @@ const App: React.FC = () => {
     }
   };
 
-  // The loading screen stays until auth is checked
-  // If user is auth'd, it stays until first data fetch is done
   const isStartupComplete = authReady && (user ? dataReady : true);
 
   if (!authReady) return <LoadingScreen isReady={false} />;
@@ -128,19 +139,12 @@ const App: React.FC = () => {
             onLogout={handleLogout} 
             onInstall={handleInstallApp}
             isInstallable={!!installPrompt}
+            isDarkMode={isDarkMode}
+            toggleTheme={() => setIsDarkMode(!isDarkMode)}
           />
           
           <main className="flex-1 overflow-y-auto custom-scrollbar safe-pt lg:pb-0 pb-20">
-            <div className="max-w-5xl mx-auto px-4 py-6 md:px-8 lg:py-12">
-              {!dataReady ? (
-                <div className="animate-in fade-in duration-500">
-                  {/* Global loader used during navigation-based data refreshes if needed */}
-                  <div className="h-1 w-full bg-slate-200 dark:bg-slate-800 overflow-hidden fixed top-0 left-0 z-[100]">
-                    <div className="h-full bg-teal-500 w-1/3 animate-[shimmer_2s_infinite_linear]" />
-                  </div>
-                </div>
-              ) : null}
-
+            <div className="max-w-5xl mx-auto px-4 py-6 md:px-8 lg:py-12 content-transition">
               {activeTab === 'dashboard' && <Dashboard dreams={dreams} goals={goals} logs={logs} isLoading={!dataReady} />}
               {activeTab === 'dreams' && (
                 <DreamsPage 
@@ -159,7 +163,7 @@ const App: React.FC = () => {
                 />
               )}
               {activeTab === 'discovery' && <DiscoveryPage />}
-              {activeTab === 'profile' && <ProfilePage user={user} onLogout={handleLogout} />}
+              {activeTab === 'profile' && <ProfilePage user={user} onLogout={handleLogout} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} />}
             </div>
           </main>
 
