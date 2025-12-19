@@ -1,29 +1,34 @@
 
 import React, { useState } from 'react';
 import { ActionLog } from '../types';
+import { storageService } from '../services/storageService';
 
 interface ActionLogPageProps {
   logs: ActionLog[];
   setLogs: React.Dispatch<React.SetStateAction<ActionLog[]>>;
+  userId: string;
 }
 
-const ActionLogPage: React.FC<ActionLogPageProps> = ({ logs, setLogs }) => {
+const ActionLogPage: React.FC<ActionLogPageProps> = ({ logs, setLogs, userId }) => {
   const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim()) return;
     
-    const newLog: ActionLog = {
-      id: Math.random().toString(36).substr(2, 9),
-      userId: 'u1',
+    setLoading(true);
+    const logData: Omit<ActionLog, 'id'> = {
+      userId,
       content,
       date: Date.now(),
       createdAt: Date.now(),
     };
     
-    setLogs([newLog, ...logs]);
+    const id = await storageService.addLog(logData);
+    setLogs([{ ...logData, id }, ...logs]);
     setContent('');
+    setLoading(false);
   };
 
   return (
@@ -45,9 +50,10 @@ const ActionLogPage: React.FC<ActionLogPageProps> = ({ logs, setLogs }) => {
           <div className="flex justify-end">
             <button 
               type="submit" 
-              disabled={!content.trim()}
-              className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!content.trim() || loading}
+              className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
+              {loading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
               Log Progress
             </button>
           </div>

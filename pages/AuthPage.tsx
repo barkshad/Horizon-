@@ -1,37 +1,55 @@
 
 import React, { useState } from 'react';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signInAnonymously,
+  updateProfile
+} from "firebase/auth";
+import { auth } from "../services/firebase";
 import { User } from '../types';
 
 interface AuthPageProps {
   onLogin: (u: User) => void;
 }
 
-const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
+const AuthPage: React.FC<AuthPageProps> = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newUser: User = {
-      uid: 'u1',
-      email: email || null,
-      displayName: email ? email.split('@')[0] : 'Adventurer',
-      accountType: 'registered',
-      createdAt: Date.now(),
-    };
-    onLogin(newUser);
+    setError(null);
+    setLoading(true);
+    try {
+      if (isLogin) {
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, {
+          displayName: email.split('@')[0]
+        });
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGuestMode = () => {
-    const guestUser: User = {
-      uid: 'guest_' + Math.random().toString(36).substr(2, 9),
-      email: null,
-      displayName: 'Guest User',
-      accountType: 'guest',
-      createdAt: Date.now(),
-    };
-    onLogin(guestUser);
+  const handleGuestMode = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      await signInAnonymously(auth);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -46,6 +64,12 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
         </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-xl">
+          {error && (
+            <div className="mb-6 p-3 bg-red-50 text-red-600 text-xs rounded-xl border border-red-100 dark:bg-red-900/20 dark:border-red-900/30">
+              {error}
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Email Address</label>
@@ -72,8 +96,10 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
 
             <button 
               type="submit"
-              className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 dark:shadow-none"
+              disabled={loading}
+              className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 dark:shadow-none flex items-center justify-center gap-2"
             >
+              {loading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
               {isLogin ? 'Sign In' : 'Create Account'}
             </button>
           </form>
@@ -86,6 +112,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
 
           <button 
             onClick={handleGuestMode}
+            disabled={loading}
             className="w-full mt-6 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
           >
             Continue as Guest

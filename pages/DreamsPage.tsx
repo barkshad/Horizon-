@@ -1,15 +1,17 @@
 
 import React, { useState } from 'react';
 import { Dream, Goal, DreamCategory, TimeHorizon, GoalStatus } from '../types';
+import { storageService } from '../services/storageService';
 
 interface DreamsPageProps {
   dreams: Dream[];
   setDreams: React.Dispatch<React.SetStateAction<Dream[]>>;
   goals: Goal[];
   setGoals: React.Dispatch<React.SetStateAction<Goal[]>>;
+  userId: string;
 }
 
-const DreamsPage: React.FC<DreamsPageProps> = ({ dreams, setDreams, goals, setGoals }) => {
+const DreamsPage: React.FC<DreamsPageProps> = ({ dreams, setDreams, goals, setGoals, userId }) => {
   const [selectedDreamId, setSelectedDreamId] = useState<string | null>(null);
   const [isAddingDream, setIsAddingDream] = useState(false);
   const [newDream, setNewDream] = useState({ title: '', description: '', category: DreamCategory.PERSONAL, horizon: TimeHorizon.ONE_YEAR });
@@ -17,45 +19,44 @@ const DreamsPage: React.FC<DreamsPageProps> = ({ dreams, setDreams, goals, setGo
   const activeDreams = dreams.filter(d => !d.isArchived);
   const selectedDream = dreams.find(d => d.id === selectedDreamId);
 
-  const handleAddDream = (e: React.FormEvent) => {
+  const handleAddDream = async (e: React.FormEvent) => {
     e.preventDefault();
-    const dream: Dream = {
+    const dreamData: Omit<Dream, 'id'> = {
       ...newDream,
-      id: Math.random().toString(36).substr(2, 9),
-      userId: 'u1',
+      userId,
+      isArchived: false,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      isArchived: false,
     };
-    setDreams([dream, ...dreams]);
+    const id = await storageService.addDream(dreamData);
+    setDreams([{ ...dreamData, id }, ...dreams]);
     setIsAddingDream(false);
     setNewDream({ title: '', description: '', category: DreamCategory.PERSONAL, horizon: TimeHorizon.ONE_YEAR });
   };
 
-  const handleAddGoal = (dreamId: string) => {
+  const handleAddGoal = async (dreamId: string) => {
     const title = prompt('Enter goal title:');
     if (!title) return;
-    const goal: Goal = {
-      id: Math.random().toString(36).substr(2, 9),
+    const goalData: Omit<Goal, 'id'> = {
       dreamId,
-      userId: 'u1',
+      userId,
       title,
       status: GoalStatus.NOT_STARTED,
       progress: 0,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
-    setGoals([...goals, goal]);
+    const id = await storageService.addGoal(goalData);
+    setGoals([...goals, { ...goalData, id }]);
   };
 
-  const updateGoalProgress = (goalId: string, progress: number) => {
-    setGoals(prev => prev.map(g => {
-      if (g.id === goalId) {
-        const newStatus = progress === 100 ? GoalStatus.COMPLETED : progress > 0 ? GoalStatus.IN_PROGRESS : GoalStatus.NOT_STARTED;
-        return { ...g, progress, status: newStatus, updatedAt: Date.now() };
-      }
-      return g;
-    }));
+  const updateGoalProgress = async (goalId: string, progress: number) => {
+    const newStatus = progress === 100 ? GoalStatus.COMPLETED : progress > 0 ? GoalStatus.IN_PROGRESS : GoalStatus.NOT_STARTED;
+    const updates = { progress, status: newStatus, updatedAt: Date.now() };
+    
+    // Optimistic update
+    setGoals(prev => prev.map(g => g.id === goalId ? { ...g, ...updates } : g));
+    await storageService.updateGoal(goalId, updates);
   };
 
   if (selectedDreamId && selectedDream) {

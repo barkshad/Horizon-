@@ -1,45 +1,73 @@
 
-import { Dream, Goal, ActionLog, User } from '../types';
-import { INITIAL_DREAMS, INITIAL_GOALS, INITIAL_LOGS } from './mockData';
-
-const KEYS = {
-  USER: 'horizon_user',
-  DREAMS: 'horizon_dreams',
-  GOALS: 'horizon_goals',
-  LOGS: 'horizon_logs',
-};
+import { 
+  collection, 
+  getDocs, 
+  query, 
+  where, 
+  addDoc, 
+  updateDoc, 
+  doc, 
+  deleteDoc,
+  serverTimestamp,
+  orderBy
+} from "firebase/firestore";
+import { db } from "./firebase";
+import { Dream, Goal, ActionLog } from "../types";
 
 export const storageService = {
-  getUser: (): User | null => {
-    const data = localStorage.getItem(KEYS.USER);
-    return data ? JSON.parse(data) : null;
+  // Dreams
+  async getDreams(userId: string): Promise<Dream[]> {
+    const q = query(collection(db, "dreams"), where("userId", "==", userId));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Dream));
   },
-  setUser: (user: User | null) => {
-    if (user) localStorage.setItem(KEYS.USER, JSON.stringify(user));
-    else localStorage.removeItem(KEYS.USER);
+  async addDream(dream: Omit<Dream, 'id'>): Promise<string> {
+    const docRef = await addDoc(collection(db, "dreams"), {
+      ...dream,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    });
+    return docRef.id;
   },
-  getDreams: (): Dream[] => {
-    const data = localStorage.getItem(KEYS.DREAMS);
-    return data ? JSON.parse(data) : INITIAL_DREAMS;
+  async updateDream(dreamId: string, updates: Partial<Dream>): Promise<void> {
+    const docRef = doc(db, "dreams", dreamId);
+    await updateDoc(docRef, { ...updates, updatedAt: Date.now() });
   },
-  saveDreams: (dreams: Dream[]) => {
-    localStorage.setItem(KEYS.DREAMS, JSON.stringify(dreams));
+
+  // Goals
+  async getGoals(userId: string): Promise<Goal[]> {
+    const q = query(collection(db, "goals"), where("userId", "==", userId));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Goal));
   },
-  getGoals: (): Goal[] => {
-    const data = localStorage.getItem(KEYS.GOALS);
-    return data ? JSON.parse(data) : INITIAL_GOALS;
+  async addGoal(goal: Omit<Goal, 'id'>): Promise<string> {
+    const docRef = await addDoc(collection(db, "goals"), {
+      ...goal,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    });
+    return docRef.id;
   },
-  saveGoals: (goals: Goal[]) => {
-    localStorage.setItem(KEYS.GOALS, JSON.stringify(goals));
+  async updateGoal(goalId: string, updates: Partial<Goal>): Promise<void> {
+    const docRef = doc(db, "goals", goalId);
+    await updateDoc(docRef, { ...updates, updatedAt: Date.now() });
   },
-  getLogs: (): ActionLog[] => {
-    const data = localStorage.getItem(KEYS.LOGS);
-    return data ? JSON.parse(data) : INITIAL_LOGS;
+
+  // Logs
+  async getLogs(userId: string): Promise<ActionLog[]> {
+    const q = query(
+      collection(db, "logs"), 
+      where("userId", "==", userId),
+      orderBy("date", "desc")
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ActionLog));
   },
-  saveLogs: (logs: ActionLog[]) => {
-    localStorage.setItem(KEYS.LOGS, JSON.stringify(logs));
-  },
-  clearAll: () => {
-    Object.values(KEYS).forEach(k => localStorage.removeItem(k));
+  async addLog(log: Omit<ActionLog, 'id'>): Promise<string> {
+    const docRef = await addDoc(collection(db, "logs"), {
+      ...log,
+      createdAt: Date.now()
+    });
+    return docRef.id;
   }
 };
