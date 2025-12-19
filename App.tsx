@@ -13,6 +13,7 @@ import Sidebar from './components/Sidebar';
 import BottomNav from './components/BottomNav';
 import LoadingScreen from './components/LoadingScreen';
 import WelcomeScreen from './components/WelcomeScreen';
+import OnboardingWizard from './components/OnboardingWizard';
 
 export type AppTab = 'dashboard' | 'dreams' | 'logs' | 'discovery' | 'profile';
 
@@ -26,6 +27,7 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AppTab>('dashboard');
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [hasProceeded, setHasProceeded] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('horizon-theme');
@@ -53,7 +55,8 @@ const App: React.FC = () => {
         };
         setUser(u);
         fetchData(u.uid);
-        setHasProceeded(true); // Skip welcome if logged in
+        setHasProceeded(true);
+        checkOnboarding();
       } else {
         setDataReady(true);
       }
@@ -71,12 +74,14 @@ const App: React.FC = () => {
         };
         setUser(u);
         fetchData(u.uid);
+        checkOnboarding();
       } else {
         setUser(null);
         setDreams([]);
         setGoals([]);
         setLogs([]);
         setDataReady(true);
+        setShowOnboarding(false);
       }
     });
 
@@ -91,6 +96,18 @@ const App: React.FC = () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
     };
   }, []);
+
+  const checkOnboarding = () => {
+    const completed = localStorage.getItem('horizon-onboarding-complete');
+    if (!completed) {
+      setShowOnboarding(true);
+    }
+  };
+
+  const handleCompleteOnboarding = () => {
+    localStorage.setItem('horizon-onboarding-complete', 'true');
+    setShowOnboarding(false);
+  };
 
   const fetchData = async (uid: string) => {
     setDataReady(false);
@@ -113,6 +130,7 @@ const App: React.FC = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setHasProceeded(false);
+    setShowOnboarding(false);
   };
 
   const handleInstallApp = async () => {
@@ -133,6 +151,14 @@ const App: React.FC = () => {
     <>
       <LoadingScreen isReady={isStartupComplete} />
       
+      {showOnboarding && user && (
+        <OnboardingWizard 
+          onComplete={handleCompleteOnboarding} 
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
+      )}
+
       {!user ? (
         !hasProceeded ? (
           <WelcomeScreen 
