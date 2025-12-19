@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Dream, Goal, ActionLog } from './types';
 import { storageService } from './services/storageService';
+import { supabase } from './services/supabase';
 import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
 import DreamsPage from './pages/DreamsPage';
@@ -18,23 +19,53 @@ const App: React.FC = () => {
   const [installPrompt, setInstallPrompt] = useState<any>(null);
 
   useEffect(() => {
-    const localUser = storageService.getLocalUser();
-    if (localUser) {
-      setUser(localUser);
-      fetchData(localUser.uid);
-    }
-    setLoading(false);
+    // 1. Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const u: User = {
+          uid: session.user.id,
+          email: session.user.email || null,
+          displayName: session.user.user_metadata?.full_name || 'Explorer',
+          accountType: 'registered',
+          createdAt: new Date(session.user.created_at).getTime(),
+        };
+        setUser(u);
+        fetchData(u.uid);
+      }
+      setLoading(false);
+    });
 
-    // Capture the PWA install prompt
-    window.addEventListener('beforeinstallprompt', (e) => {
+    // 2. Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const u: User = {
+          uid: session.user.id,
+          email: session.user.email || null,
+          displayName: session.user.user_metadata?.full_name || 'Explorer',
+          accountType: 'registered',
+          createdAt: new Date(session.user.created_at).getTime(),
+        };
+        setUser(u);
+        fetchData(u.uid);
+      } else {
+        setUser(null);
+        setDreams([]);
+        setGoals([]);
+        setLogs([]);
+      }
+    });
+
+    // 3. PWA Install prompt
+    const handleBeforeInstall = (e: any) => {
       e.preventDefault();
       setInstallPrompt(e);
-    });
-
-    // Hide button if already installed
-    window.addEventListener('appinstalled', () => {
-      setInstallPrompt(null);
-    });
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    };
   }, []);
 
   const fetchData = async (uid: string) => {
@@ -52,18 +83,8 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLogin = (u: User) => {
-    setUser(u);
-    storageService.setLocalUser(u);
-    fetchData(u.uid);
-  };
-
-  const handleLogout = () => {
-    storageService.clearSession();
-    setUser(null);
-    setDreams([]);
-    setGoals([]);
-    setLogs([]);
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
   };
 
   const handleInstallApp = async () => {
@@ -74,12 +95,11 @@ const App: React.FC = () => {
         setInstallPrompt(null);
       }
     } else {
-      // Fallback for iOS or already installed
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
       if (isIOS) {
         alert("To install on iOS: Tap the 'Share' icon in your browser and select 'Add to Home Screen'.");
       } else {
-        alert("The app is already installed or your browser doesn't support instant installation.");
+        alert("App installation is not available at this moment.");
       }
     }
   };
@@ -93,7 +113,7 @@ const App: React.FC = () => {
   }
 
   if (!user) {
-    return <AuthPage onLogin={handleLogin} />;
+    return <AuthPage />;
   }
 
   return (
