@@ -15,6 +15,7 @@ const App: React.FC = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [logs, setLogs] = useState<ActionLog[]>([]);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'dreams' | 'logs'>('dashboard');
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
 
   useEffect(() => {
     const localUser = storageService.getLocalUser();
@@ -23,6 +24,17 @@ const App: React.FC = () => {
       fetchData(localUser.uid);
     }
     setLoading(false);
+
+    // Capture the PWA install prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    });
+
+    // Hide button if already installed
+    window.addEventListener('appinstalled', () => {
+      setInstallPrompt(null);
+    });
   }, []);
 
   const fetchData = async (uid: string) => {
@@ -54,6 +66,24 @@ const App: React.FC = () => {
     setLogs([]);
   };
 
+  const handleInstallApp = async () => {
+    if (installPrompt) {
+      installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setInstallPrompt(null);
+      }
+    } else {
+      // Fallback for iOS or already installed
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      if (isIOS) {
+        alert("To install on iOS: Tap the 'Share' icon in your browser and select 'Add to Home Screen'.");
+      } else {
+        alert("The app is already installed or your browser doesn't support instant installation.");
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
@@ -73,6 +103,8 @@ const App: React.FC = () => {
         setActiveTab={setActiveTab} 
         user={user} 
         onLogout={handleLogout} 
+        onInstall={handleInstallApp}
+        isInstallable={!!installPrompt}
       />
       
       <main className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 transition-all">

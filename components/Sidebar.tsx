@@ -7,9 +7,11 @@ interface SidebarProps {
   setActiveTab: (tab: 'dashboard' | 'dreams' | 'logs') => void;
   user: User;
   onLogout: () => void;
+  onInstall: () => void;
+  isInstallable: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user, onLogout }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user, onLogout, onInstall, isInstallable }) => {
   const NavItem = ({ id, label, icon }: { id: typeof activeTab, label: string, icon: React.ReactNode }) => (
     <button
       onClick={() => setActiveTab(id)}
@@ -51,6 +53,20 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user, onLogo
           label="Action Logs" 
           icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
         />
+
+        {/* Dynamic Install Button */}
+        <div className="pt-8 pb-4">
+          <button 
+            onClick={onInstall}
+            className={`w-full group relative flex items-center justify-center gap-3 px-4 py-4 rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-700 text-white font-bold text-sm shadow-xl shadow-indigo-200 dark:shadow-none transition-all hover:scale-[1.02] active:scale-[0.98] ${!isInstallable ? 'opacity-80' : 'animate-pulse'}`}
+          >
+            <svg className="w-5 h-5 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Get Mobile App
+          </button>
+          <p className="text-[10px] text-center mt-3 text-slate-400 font-bold uppercase tracking-widest">Install to your home screen</p>
+        </div>
       </nav>
 
       <div className="mt-auto pt-6 border-t border-slate-200 dark:border-slate-800">
