@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { User } from '../types';
+import { LayoutDashboard, Target, History, LogOut, Smartphone, Sparkles } from 'lucide-react';
 
 interface SidebarProps {
   activeTab: 'dashboard' | 'dreams' | 'logs';
@@ -12,81 +13,68 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user, onLogout, onInstall, isInstallable }) => {
-  const NavItem = ({ id, label, icon }: { id: typeof activeTab, label: string, icon: React.ReactNode }) => (
+  const NavItem = ({ id, label, icon: Icon }: { id: typeof activeTab, label: string, icon: any }) => (
     <button
       onClick={() => setActiveTab(id)}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+      className={`w-full group flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 ${
         activeTab === id 
-          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20' 
-          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900'
+          ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200 dark:border-slate-700' 
+          : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'
       }`}
     >
-      {icon}
-      <span className="font-medium">{label}</span>
+      <Icon size={20} className={activeTab === id ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'} />
+      <span className="font-bold tracking-tight">{label}</span>
     </button>
   );
 
   return (
-    <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-6">
-      <div className="mb-10 flex items-center gap-2">
-        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-          <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
+    <aside className="hidden lg:flex flex-col w-72 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-r border-slate-200 dark:border-slate-800/50 p-8 h-screen sticky top-0">
+      <div className="mb-12 flex items-center gap-3">
+        <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200 dark:shadow-none animate-float">
+          <Sparkles size={22} className="text-white" />
         </div>
-        <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white">Horizon</h1>
+        <h1 className="text-2xl font-extrabold tracking-tighter text-slate-900 dark:text-white">Horizon</h1>
       </div>
 
-      <nav className="flex-1 space-y-2">
-        <NavItem 
-          id="dashboard" 
-          label="Dashboard" 
-          icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>}
-        />
-        <NavItem 
-          id="dreams" 
-          label="My Dreams" 
-          icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>}
-        />
-        <NavItem 
-          id="logs" 
-          label="Action Logs" 
-          icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-        />
+      <nav className="flex-1 space-y-3">
+        <NavItem id="dashboard" label="Dashboard" icon={LayoutDashboard} />
+        <NavItem id="dreams" label="Dreams" icon={Target} />
+        <NavItem id="logs" label="Momentum" icon={History} />
 
-        {/* Dynamic Install Button */}
-        <div className="pt-8 pb-4">
+        <div className="pt-10 space-y-4">
+          <p className="px-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Application</p>
           <button 
             onClick={onInstall}
-            className={`w-full group relative flex items-center justify-center gap-3 px-4 py-4 rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-700 text-white font-bold text-sm shadow-xl shadow-indigo-200 dark:shadow-none transition-all hover:scale-[1.02] active:scale-[0.98] ${!isInstallable ? 'opacity-80' : 'animate-pulse'}`}
+            className={`w-full group relative flex items-center gap-3 px-4 py-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 dark:from-indigo-600 dark:to-indigo-700 text-white font-bold text-sm shadow-xl transition-all hover:scale-[1.03] active:scale-[0.98] ${!isInstallable && 'opacity-50 grayscale'}`}
           >
-            <svg className="w-5 h-5 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Get Mobile App
+            <div className="p-2 bg-white/10 rounded-lg">
+              <Smartphone size={16} />
+            </div>
+            <span>Get Native App</span>
+            {isInstallable && <div className="absolute -top-1 -right-1 w-3 h-3 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900" />}
           </button>
-          <p className="text-[10px] text-center mt-3 text-slate-400 font-bold uppercase tracking-widest">Install to your home screen</p>
         </div>
       </nav>
 
-      <div className="mt-auto pt-6 border-t border-slate-200 dark:border-slate-800">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-500 font-bold overflow-hidden">
+      <div className="mt-auto pt-8 border-t border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-4 mb-6 p-2 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50">
+          <div className="w-11 h-11 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-black overflow-hidden shadow-inner">
             {user.photoURL ? (
-              <img src={user.photoURL} alt={user.displayName} className="w-full h-full object-cover" />
+              <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
             ) : (
               user.displayName.charAt(0).toUpperCase()
             )}
           </div>
-          <div className="flex-1 overflow-hidden">
-            <p className="text-sm font-semibold truncate dark:text-white">{user.displayName}</p>
-            <p className="text-xs text-slate-500 truncate">{user.accountType === 'guest' ? 'Guest Mode' : user.email}</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold truncate dark:text-white leading-tight">{user.displayName}</p>
+            <p className="text-[11px] text-slate-500 font-medium truncate uppercase tracking-tighter">Registered Explorer</p>
           </div>
         </div>
         <button 
           onClick={onLogout}
-          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-2xl transition-all"
         >
+          <LogOut size={16} />
           Sign Out
         </button>
       </div>

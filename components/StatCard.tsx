@@ -10,13 +10,13 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ label, value, icon, colorClass }) => {
   return (
-    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-transform hover:scale-[1.02]">
+    <div className="glass-card p-6 rounded-3xl transition-all duration-300 hover:translate-y-[-4px] group">
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{label}</p>
-          <h3 className="text-3xl font-bold dark:text-white">{value}</h3>
+        <div className="space-y-1">
+          <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{label}</p>
+          <h3 className="text-4xl font-black dark:text-white tracking-tighter group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{value}</h3>
         </div>
-        <div className={`p-3 rounded-xl ${colorClass}`}>
+        <div className={`p-4 rounded-2xl ${colorClass} shadow-inner group-hover:rotate-12 transition-transform duration-500`}>
           {icon}
         </div>
       </div>

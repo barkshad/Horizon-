@@ -2,6 +2,7 @@
 import React from 'react';
 import { Dream, Goal, ActionLog, GoalStatus } from '../types';
 import StatCard from '../components/StatCard';
+import { Star, Clock, CheckCircle2, TrendingUp, Calendar, Zap } from 'lucide-react';
 
 interface DashboardProps {
   dreams: Dream[];
@@ -19,79 +20,103 @@ const Dashboard: React.FC<DashboardProps> = ({ dreams, goals, logs }) => {
     : 0;
 
   return (
-    <div className="space-y-8">
-      <header>
-        <h2 className="text-3xl font-bold text-slate-800 dark:text-white">Your Progress</h2>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">Focus on what matters most today.</p>
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">Your Horizon</h2>
+          <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Today is a beautiful day to build your future.</p>
+        </div>
+        <div className="flex gap-3">
+          <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl text-sm font-bold border border-indigo-100 dark:border-indigo-800/50">
+            <Calendar size={16} />
+            <span>{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+          </div>
+        </div>
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
           label="Active Dreams" 
           value={activeDreams} 
-          colorClass="bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
-          icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.175 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.382-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>}
+          colorClass="bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+          icon={<Star size={24} />}
         />
         <StatCard 
           label="In Progress" 
           value={inProgressGoals} 
-          colorClass="bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
-          icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+          colorClass="bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+          icon={<Clock size={24} />}
         />
         <StatCard 
           label="Completed" 
           value={completedGoals} 
-          colorClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-          icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+          colorClass="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+          icon={<CheckCircle2 size={24} />}
         />
         <StatCard 
-          label="Avg. Momentum" 
+          label="Overall Momentum" 
           value={`${avgProgress}%`} 
-          colorClass="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-          icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>}
+          colorClass="bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
+          icon={<TrendingUp size={24} />}
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <section className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xl font-bold dark:text-white">Recent Activity</h3>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <section className="xl:col-span-2 space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-2xl font-black dark:text-white tracking-tight flex items-center gap-2">
+              <Zap size={22} className="text-indigo-500" />
+              Latest Momentum
+            </h3>
           </div>
-          <div className="space-y-3">
-            {logs.slice(0, 5).map(log => (
-              <div key={log.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex gap-4">
-                <div className="w-1 bg-indigo-500 rounded-full" />
+          <div className="grid gap-4">
+            {logs.slice(0, 5).map((log, idx) => (
+              <div 
+                key={log.id} 
+                className="glass-card p-5 rounded-3xl flex gap-5 group hover:bg-white dark:hover:bg-slate-800/80 transition-all"
+                style={{ animationDelay: `${idx * 100}ms` }}
+              >
+                <div className="flex-shrink-0 w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-2xl flex flex-col items-center justify-center border border-slate-200 dark:border-slate-700">
+                  <span className="text-xs font-black text-slate-400 leading-none mb-1">{new Date(log.date).toLocaleDateString(undefined, { month: 'short' })}</span>
+                  <span className="text-lg font-black text-slate-800 dark:text-white leading-none">{new Date(log.date).getDate()}</span>
+                </div>
                 <div>
-                  <p className="text-slate-700 dark:text-slate-300">{log.content}</p>
-                  <p className="text-xs text-slate-500 mt-1">{new Date(log.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{log.content}</p>
+                  <p className="text-[10px] font-black text-slate-400 mt-2 uppercase tracking-widest">{new Date(log.date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</p>
                 </div>
               </div>
             ))}
             {logs.length === 0 && (
-              <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800">
-                <p className="text-slate-500">No recent activity logs.</p>
+              <div className="text-center py-20 glass-card rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                <p className="text-slate-400 font-bold">No entries yet. Start with a small win today.</p>
               </div>
             )}
           </div>
         </section>
 
-        <section className="space-y-4">
-          <h3 className="text-xl font-bold dark:text-white">Dream Health</h3>
+        <section className="space-y-6">
+          <h3 className="text-2xl font-black dark:text-white tracking-tight">Visions in Focus</h3>
           <div className="space-y-4">
-            {dreams.slice(0, 3).map(dream => {
+            {dreams.length === 0 && (
+              <div className="p-10 text-center glass-card rounded-3xl">
+                <p className="text-slate-400 font-bold italic">No dreams added yet.</p>
+              </div>
+            )}
+            {dreams.slice(0, 4).map(dream => {
               const dreamGoals = goals.filter(g => g.dreamId === dream.id);
               const progress = dreamGoals.length > 0 
                 ? Math.round(dreamGoals.reduce((acc, g) => acc + g.progress, 0) / dreamGoals.length) 
                 : 0;
               return (
-                <div key={dream.id} className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-semibold truncate dark:text-white">{dream.title}</span>
-                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{progress}%</span>
+                <div key={dream.id} className="glass-card p-6 rounded-3xl group cursor-pointer hover:border-indigo-500/50 transition-all">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">{dream.category}</span>
+                    <span className="text-xs font-black dark:text-white">{progress}%</span>
                   </div>
-                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                  <h4 className="text-lg font-bold truncate dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{dream.title}</h4>
+                  <div className="mt-4 w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden shadow-inner">
                     <div 
-                      className="bg-indigo-600 h-full rounded-full transition-all duration-500"
+                      className="bg-gradient-to-r from-indigo-500 to-purple-600 h-full rounded-full transition-all duration-1000 ease-out"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
