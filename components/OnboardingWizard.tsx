@@ -76,28 +76,61 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, activeT
 
   if (!isVisible) return null;
 
-  return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-500">
-      {/* Target Pulse - only shown if target is not 'none' */}
-      {currentStep.target !== 'none' && (
-        <div className="fixed inset-0 pointer-events-none">
-          {/* This is a visual hint, real-world positioning usually uses element.getBoundingClientRect() 
-              For this simplified logic, we assume standard layout positions */}
-          <div className={`absolute transition-all duration-700 rounded-full border-4 border-teal-500 animate-ping opacity-75 ${
-            currentStep.target === 'dashboard-nav' ? 'bottom-8 left-1/2 -translate-x-[150%]' :
-            currentStep.target === 'dreams-nav' ? 'bottom-8 left-1/2 -translate-x-[50%]' :
-            currentStep.target === 'logs-nav' ? 'bottom-8 left-1/2 translate-x-[50%]' : ''
-          } w-16 h-16 lg:hidden`} />
-          
-          <div className={`absolute transition-all duration-700 rounded-2xl border-4 border-teal-500 animate-pulse opacity-75 hidden lg:block ${
-            currentStep.target === 'dashboard-nav' ? 'top-24 left-8 w-64 h-14' :
-            currentStep.target === 'dreams-nav' ? 'top-[164px] left-8 w-64 h-14' :
-            currentStep.target === 'logs-nav' ? 'top-[228px] left-8 w-64 h-14' : ''
-          }`} />
-        </div>
-      )}
+  // Positioning logic for the high-visibility spotlight
+  const getSpotlightStyles = () => {
+    if (currentStep.target === 'none') return { opacity: 0 };
+    
+    const isMobile = window.innerWidth < 1024;
+    
+    if (isMobile) {
+      // Logic for Bottom Nav (Simplified assuming 5 items)
+      const offsetMap: Record<string, string> = {
+        'dashboard-nav': '10%',
+        'dreams-nav': '30%',
+        'logs-nav': '50%'
+      };
+      return {
+        bottom: '8px',
+        left: offsetMap[currentStep.target] || '50%',
+        width: '64px',
+        height: '64px',
+        borderRadius: '16px',
+        boxShadow: '0 0 0 9999px rgba(2, 6, 23, 0.85)',
+        border: '3px solid #0d9488',
+        zIndex: 9998
+      };
+    } else {
+      // Logic for Sidebar
+      const topMap: Record<string, string> = {
+        'dashboard-nav': '96px',
+        'dreams-nav': '160px',
+        'logs-nav': '224px'
+      };
+      return {
+        top: topMap[currentStep.target] || '0',
+        left: '32px',
+        width: '224px',
+        height: '48px',
+        borderRadius: '16px',
+        boxShadow: '0 0 0 9999px rgba(2, 6, 23, 0.85)',
+        border: '3px solid #0d9488',
+        zIndex: 9998
+      };
+    }
+  };
 
-      <div className="max-w-sm w-full bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-8 space-y-6 relative animate-in zoom-in-95 duration-300">
+  return (
+    <div className="fixed inset-0 z-[9997] flex items-center justify-center p-6 animate-in fade-in duration-500 overflow-hidden">
+      {/* Dynamic Spotlight Hole Effect */}
+      <div 
+        className="fixed transition-all duration-500 pointer-events-none"
+        style={getSpotlightStyles() as any}
+      >
+        <div className="absolute inset-0 animate-pulse border-4 border-teal-500/50 rounded-[inherit]" />
+      </div>
+
+      {/* The Guidance Card */}
+      <div className="max-w-sm w-full bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-8 space-y-6 relative animate-in zoom-in-95 duration-300 z-[9999]">
         <button 
           onClick={onComplete}
           className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
@@ -138,6 +171,11 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, activeT
           </button>
         </div>
       </div>
+      
+      {/* Background click catcher for the rest of the dark area (excluding hole) */}
+      {currentStep.target === 'none' && (
+        <div className="fixed inset-0 bg-slate-950/80 -z-10" />
+      )}
     </div>
   );
 };
